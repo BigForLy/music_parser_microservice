@@ -2,6 +2,7 @@ from typing import List, Generator
 from api.const import SEARCH_LINK
 from api.services import get_requests
 import httpx
+import functools
 from bs4 import BeautifulSoup, element, SoupStrainer
 
 
@@ -17,18 +18,9 @@ async def get_link_to_download_song(song_name: str) -> str:
 async def get_href_to_url(url: str, find_text: str, **kwargs) -> str:
     response: httpx.Response = await get_requests(url)  # TODO: raise exception
 
-    def _inner(item: element.Tag):
-        isalnum_find_text: str = "".join(char for char in find_text if char.isalnum())
-        if isalnum_find_text in "".join(
-            char for char in item.get_text() if char.isalnum()
-        ):
-            return True
-        else:
-            return False
+    inner = functools.partial(criterion_truth, find_text)
 
-    # _inner = functools.partial(criterion_truth, find_text)
-
-    return await SoupHref(response.text, _inner, **kwargs).get_href
+    return await SoupHref(response.text, inner, **kwargs).get_href
 
 
 def criterion_truth(desired: str, valid: str) -> bool:
@@ -53,7 +45,7 @@ class SoupHref:
                     True if item.has_attr(key) and item.get(key)[0] == value else False
                     for key, value in kwargs.items()
                 ]
-            ) and (lambda_ is None or lambda_ is not None and lambda_(item))
+            ) and (lambda_ is None or lambda_ is not None and lambda_(item.get_text()))
 
         soup = BeautifulSoup(html_text, "html.parser", parse_only=SoupStrainer("a"))
         # получаем список ссылок на страницу загрузки
