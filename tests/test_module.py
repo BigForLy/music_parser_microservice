@@ -1,6 +1,6 @@
 import asyncio
 from dataclasses import dataclass
-from song.parser import (
+from song.services import (
     SoupHref,
     construct_building,
     criterion_truth,

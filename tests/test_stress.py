@@ -2,7 +2,7 @@ import warnings
 import time
 import asyncio
 
-from song.parser import SoupHref, construct_building
+from song.services import SoupHref, construct_building
 
 
 async def performance_test(name: str, n_count: int = 10):
