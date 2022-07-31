@@ -1,9 +1,13 @@
 import asyncio
 from dataclasses import dataclass
-from api.app.parser import criterion_truth, get_href_to_url, get_link_to_download_song
+from song.parser import (
+    SoupHref,
+    construct_building,
+    criterion_truth,
+)
 import pytest
 
-from api.const import SEARCH_LINK
+from song.const import SEARCH_LINK
 
 
 @pytest.fixture()
@@ -20,25 +24,29 @@ class Music:
 
 
 class AbstractTest:
-    def test_get_download_song(self):
-        async def _inner() -> str:
-            return await get_link_to_download_song(self.music.text)
-
-        result: str = asyncio.run(_inner())
-        assert result == self.music.url_download, result
-
     def test_get_href_to_music_page(self):
         url: str = SEARCH_LINK + self.music.text
 
         async def _inner() -> str:
-            return await get_href_to_url(url, self.music.text, rel="bookmark")
+            soup = SoupHref(url)
+            await soup.get_href_to_url(self.music.text, rel="bookmark")
+            return soup.url
 
         result: str = asyncio.run(_inner())
         assert result == self.music.music_page_url, result
 
     def test_get_href_to_download_music(self, download_text):
         async def _inner() -> str:
-            return await get_href_to_url(self.music.music_page_url, download_text)
+            soup = SoupHref(self.music.music_page_url)
+            await soup.get_href_to_url(download_text)
+            return soup.url
+
+        result: str = asyncio.run(_inner())
+        assert result == self.music.url_download, result
+
+    def test_construct_building_download_music(self):
+        async def _inner() -> str:
+            return await construct_building(SoupHref, self.music.text)
 
         result: str = asyncio.run(_inner())
         assert result == self.music.url_download, result
