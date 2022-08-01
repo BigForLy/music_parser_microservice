@@ -50,7 +50,7 @@ class AbstractTest:
             return soup.url
 
         result: str = asyncio.run(_inner())
-        assert result == self.music.url_download, f'\n{result}'
+        assert result == self.music.url_download, f"\n{result}"
 
     def test_criterion_truth_future_failure(self):
         assert criterion_truth(self.music.text, self.music.text_enother) == True
@@ -99,4 +99,19 @@ def fixture_class_for_example3(request):
 
 @pytest.mark.usefixtures("fixture_class_for_example3")
 class TestDownloadSongExample3(AbstractTest):
+    pass
+
+
+@pytest.fixture(scope="class")
+def fixture_class_for_example4(request):
+    request.cls.music = Music(
+        text="Hayley Kiyoko - sugar at the bottom",
+        text_enother="Hayley Kiyoko - sugar at the bottom",
+        music_page_url=None,
+        url_download=None,
+    )
+
+
+@pytest.mark.usefixtures("fixture_class_for_example4")
+class TestDownloadSongExample4(AbstractTest):
     pass
