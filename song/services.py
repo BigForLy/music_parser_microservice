@@ -3,14 +3,7 @@ from .const import SEARCH_LINK
 import httpx
 import functools
 from bs4 import BeautifulSoup, element, SoupStrainer
-from typing import Generator, List
-
-
-async def get_requests(url: str) -> httpx.Response:
-    async with httpx.AsyncClient() as client:
-        result: httpx.Response = await client.get(url)
-        result.raise_for_status()
-        return result
+from typing import Generator, Iterable, List
 
 
 def criterion_truth(desired: str, valid: str) -> bool:
@@ -27,13 +20,13 @@ def criterion_truth(desired: str, valid: str) -> bool:
     return True if sum(result) / len(result) > 0.5 else False
 
 
-async def construct_building(cls: SoupHref, song_name: str):
+async def construct_building(cls: SoupHref, song_name: str) -> SoupHref:
     url: str = SEARCH_LINK + song_name
 
     soup: SoupHref = cls(url)
     await soup.get_href_to_url(song_name, rel="bookmark")
     await soup.get_href_to_url("DOWNLOAD MP3:")
-    return soup.url
+    return soup
 
 
 class SoupHref:
@@ -41,7 +34,7 @@ class SoupHref:
         self.__url: str = url
 
     async def get_href_to_url(self, find_text: str, **kwargs) -> None:
-        response: httpx.Response = await get_requests(self.url)  # TODO: raise exception
+        response: httpx.Response = await self.__get_requests(self.url)  # TODO: raise exception
 
         inner = functools.partial(criterion_truth, find_text)
         self.__get_href(response.text, inner, **kwargs)
@@ -55,11 +48,20 @@ class SoupHref:
                 ]
             ) and (lambda_ is None or lambda_ is not None and lambda_(item.get_text()))
 
-        soup = BeautifulSoup(html_text, "html.parser", parse_only=SoupStrainer("a"))
+        soup: Iterable[element.Tag] = BeautifulSoup(
+            html_text, "html.parser", parse_only=SoupStrainer("a")
+        )
         # получаем список ссылок на страницу загрузки
         search_href: List[str] = [item.get("href") for item in soup if _inner(item)]
         assert len(search_href) == 1, search_href
         self.__url: str = search_href[0]
+
+
+    async def __get_requests(self, url: str) -> httpx.Response:
+        async with httpx.AsyncClient() as client:
+            result: httpx.Response = await client.get(url)
+            result.raise_for_status()
+            return result
 
     @property
     def url(self) -> str:

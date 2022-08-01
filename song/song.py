@@ -9,4 +9,5 @@ router = APIRouter()
 
 @router.post("/v1/song/")
 async def get_link(song: Song):
-    return {"url": await construct_building(SoupHref, song.name)}
+    soup = await construct_building(SoupHref, song.name)
+    return {"url": soup.url}
