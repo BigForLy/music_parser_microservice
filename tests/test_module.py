@@ -46,10 +46,11 @@ class AbstractTest:
 
     def test_construct_building_download_music(self):
         async def _inner() -> str:
-            return await construct_building(SoupHref, self.music.text)
+            soup: SoupHref = await construct_building(SoupHref, self.music.text)
+            return soup.url
 
         result: str = asyncio.run(_inner())
-        assert result == self.music.url_download, result
+        assert result == self.music.url_download, f'\n{result}'
 
     def test_criterion_truth_future_failure(self):
         assert criterion_truth(self.music.text, self.music.text_enother) == True
@@ -83,4 +84,19 @@ def fixture_class_for_example2(request):
 
 @pytest.mark.usefixtures("fixture_class_for_example2")
 class TestDownloadSongExample2(AbstractTest):
+    pass
+
+
+@pytest.fixture(scope="class")
+def fixture_class_for_example3(request):
+    request.cls.music = Music(
+        text="NAV, Lil Baby - Never Sleep",
+        text_enother="NAV, Lil Baby - Never Sleep",
+        music_page_url="https://connectloaded.com/nav-never-sleep-ft-travis-scot-lil-baby/",
+        url_download="https://connectloaded.xyz/uploads/2022/07/NAV_ft_Travis_Scott_Lil_Baby_-_Never_Sleep_-CONNECTLOADED.COM.mp3",
+    )
+
+
+@pytest.mark.usefixtures("fixture_class_for_example3")
+class TestDownloadSongExample3(AbstractTest):
     pass
